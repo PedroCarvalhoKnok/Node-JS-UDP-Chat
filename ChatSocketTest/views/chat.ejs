@@ -25,7 +25,8 @@
     </style>
   </head>
   <body>
-    <ul id="messages"></ul>
+    <ul id="messages">
+    </ul>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -34,6 +35,14 @@
     <script>
       $(function () {
         var socket = io();
+        var username = "<%= user %>"
+        if(username != '') { 
+          socket.emit('user', username)
+          socket.on('user', function(user){
+            $('#messages').append($('<li>').text(user + ' connected...'));
+          });
+        }
+
         $('form').submit(function(){
           socket.emit('chat message', $('#m').val());
           $('#m').val('');

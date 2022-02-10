@@ -2,6 +2,7 @@ var express = require('express');
 const app = require('../app');
 var router = express.Router();
 const passport = require('passport');
+//var username = req.username;
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
@@ -20,11 +21,15 @@ router.get('/', (req, res, next) => {
   });
 
 /* POST to chat page. */
-  router.post('/chat',  
-    passport.authenticate('local', { 
-    successRedirect: '/chat', 
-    failureRedirect: '/login?fail=true' 
-  })
+  router.post('/chat',(req, res) => {
+    console.log(req.body.username);
+     passport.authenticate('local', { 
+    successRedirect: `/chat`, 
+    failureRedirect: '/login?fail=true',
+    })(req, res), {username: req.body.username}
+  }
   );
   
   module.exports = router;
+
+  //exports.username = username;
