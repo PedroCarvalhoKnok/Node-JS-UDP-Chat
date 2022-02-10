@@ -7,8 +7,20 @@ var logger = require('morgan');
 var indexRouter = require('./routes/login');
 var usersRouter = require('./routes/users');
 var chatRouter = require('./routes/chat');
+const passport = require('passport');
+const session = require('express-session');
 
 var app = express();
+
+require('./routes/auth')(passport);
+app.use(session({  
+  secret: '123',//configure um segredo seu aqui,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 30 * 60 * 1000 }//30min
+}))
+app.use(passport.initialize());
+app.use(passport.session());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -21,8 +33,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/chat', chatRouter);
+app.use('/users',authenticationMiddleware, usersRouter);
+app.use('/chat',authenticationMiddleware, chatRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -39,5 +51,10 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+function authenticationMiddleware(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  res.redirect('/login?fail=true');
+}
 
 module.exports = app;
