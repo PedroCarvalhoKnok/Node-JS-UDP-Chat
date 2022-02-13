@@ -22,20 +22,67 @@
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
+      #usertype{
+        color: white;
+      }
     </style>
   </head>
   <body>
     <ul id="messages">
     </ul>
     <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+      <p id="usertype"></p>
+      <input id="m" autocomplete="off" oninput="userType()"><button>Send</button>
     </form>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script>
+
+      var numero = 0;
+      var username = "<%= user %>";
+      var userToServer;
+
+      function userType(){
+
+        var socket = io();
+
+        
+        userToServer = username;
+        if(document.getElementById("m").value.length > 0){
+            
+            socket.emit('userMessage', userToServer);
+            socket.on('userMessage', function(userMessage){
+                  
+              document.getElementById("usertype").innerHTML = userMessage;
+          
+            })
+          
+        }
+         // socket.emit('userMessage', userToServer);
+           
+       // document.getElementById("usertype").innerHTML = `${username} está digitando...`;
+
+       // console.log(document.getElementById("m").value);
+
+        if(document.getElementById("m").value.length === 0)
+        {
+          //document.getElementById("usertype").innerHTML = '';
+          socket.emit('userRemove', userToServer);
+          socket.on('userRemove', function(userRemove){
+
+            document.getElementById("usertype").innerHTML = userRemove;
+        
+          })
+
+        }
+
+        
+      }
+
       $(function () {
         var socket = io();
-        var username = "<%= user %>"
+       // var username = "<%= user %>"
+
         if(username != '') { 
           socket.emit('user', username)
           socket.on('user', function(user){

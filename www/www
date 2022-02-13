@@ -1,0 +1,190 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('chatsockettest:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '8080');
+app.set('port', port);
+
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Start socket io in server side - when user connect and disconnect from server when sends message and the server receives and send it to all users connected.
+ */
+
+var io = require('socket.io')(server);
+var discUser;
+var usersType = [];
+var users = '';
+
+function checkExists(users, user){
+
+
+  console.log(users);
+
+  for(let u of users)
+  {
+    
+    if(u == user){
+      
+      let index = users.indexOf(user);
+
+      console.log(index)
+
+      if(index >= 0){
+        users.splice(index, index);
+      }
+
+      return false;
+
+    }
+  }
+
+  users.push(user);
+
+  console.log(users)
+
+  return true;
+
+}
+io.on('connection', function(socket){
+  //console.log(`connected`);
+  socket.on('user', function(user){
+    discUser = user;
+    console.log(user + ' connected...');
+    io.emit('user', user);
+  });
+
+  socket.on('userRemove', function(userRemove){
+
+      let index = usersType.indexOf(userRemove);
+
+      console.log(index)
+
+      if(index >= 0){
+        usersType.splice(index, 1);
+      }
+
+      userRemove = '';
+      io.emit('userRemove', userRemove);
+  })
+
+  socket.on('userMessage', function(userMessage){
+
+   // console.log(userMessage)
+    
+
+    if(!checkExists(usersType, userMessage))
+      return;
+    
+
+   // console.log(usersType);
+
+    for(let user of usersType){
+      
+      if(usersType.length > 1){
+        users = users + `${user}, `;
+        userMessage = `${users} estão digitando...`;
+        io.emit('userMessage', userMessage);
+      }
+      else{
+        users = user;
+        userMessage = `${users} está digitando...`;
+        io.emit('userMessage', userMessage);
+      }
+    }
+
+  })
+
+  socket.on('chat message', function(msg){
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);
+  });
+ 
+  socket.on('disconnect', function(){
+    console.log(`${discUser} disconnected`);
+    io.emit('chat message', discUser + ' disconnected...');
+  });
+});
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
