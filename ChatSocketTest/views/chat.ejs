@@ -89,10 +89,21 @@
             $('#messages').append($('<li>').text(user + ' connected...'));
           });
         }
+        
+        //socket.emit('userDisconnect', username)
+        socket.on('userDisconnect', function(userDisconnect){
+          $('#messages').append($('<li>').text(userDisconnect));
+        });
 
         $('form').submit(function(){
           socket.emit('chat message', $('#m').val());
           $('#m').val('');
+          socket.emit('userRemove', userToServer);
+          socket.on('userRemove', function(userRemove){
+
+            document.getElementById("usertype").innerHTML = userRemove;
+        
+          })
           return false;
         });
           socket.on('chat message', function(msg){
